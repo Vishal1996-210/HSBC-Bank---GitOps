@@ -1,0 +1,17 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: account
+  namespace: account
+
+  labels:
+    app.kubernetes.io/name: account
+    app.kubernetes.io/part-of: hsbc
+    environment: prod
+
+spec:
+  minAvailable: 2
+
+  selector:
+    matchLabels:
+      app: account
