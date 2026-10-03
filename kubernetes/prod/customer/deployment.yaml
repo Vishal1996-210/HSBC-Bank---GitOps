@@ -1,7 +1,14 @@
+# Kubernetes API version used for Deployment
 apiVersion: apps/v1
+
+# Creates a Deployment to manage Customer Pods
 kind: Deployment
+
 metadata:
+  # Name of the Deployment
   name: customer
+
+  # Namespace where the Deployment is created
   namespace: customer
 
   labels:
@@ -11,47 +18,64 @@ metadata:
     environment: prod
 
 spec:
+  # Desired number of Customer Pods
   replicas: 3
 
+  # Strategy used when deploying a new application version
   strategy:
     type: RollingUpdate
 
     rollingUpdate:
+      # Do not intentionally make existing Pods unavailable during update
       maxUnavailable: 0
+
+      # Allow one additional Pod during the update
       maxSurge: 1
 
+  # Deployment manages Pods with this label
   selector:
     matchLabels:
       app: customer
 
+  # Pod template used to create Customer Pods
   template:
     metadata:
       labels:
+        # This label connects the Pods with the Deployment and Service
         app: customer
+
         app.kubernetes.io/name: customer
         app.kubernetes.io/part-of: hsbc
         environment: prod
 
     spec:
+      # Pod uses the Customer ServiceAccount
+      # ServiceAccount can be associated with an IAM role through EKS Pod Identity
       serviceAccountName: customer
 
+      # Security settings applied to the Pod
       securityContext:
         seccompProfile:
           type: RuntimeDefault
 
       containers:
+        # Customer application container
         - name: customer
 
+          # Customer application image stored in Amazon ECR
           image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/hsbc-prod-customer-service:IMAGE_TAG
 
+          # Use local image if already available on the node
           imagePullPolicy: IfNotPresent
 
           ports:
+            # Container listens on port 8080
             - name: http
               containerPort: 8080
               protocol: TCP
 
           env:
+            # Application configuration comes from ConfigMap
             - name: SPRING_PROFILES_ACTIVE
               valueFrom:
                 configMapKeyRef:
@@ -70,6 +94,8 @@ spec:
                   name: customer-config
                   key: SPRING_DATASOURCE_URL
 
+            # Database credentials come from Kubernetes Secret
+            # The Secret is synchronized from AWS Secrets Manager
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -83,14 +109,17 @@ spec:
                   key: password
 
           resources:
+            # Minimum resources required by the container
             requests:
               cpu: 500m
               memory: 512Mi
 
+            # Maximum resources allowed for the container
             limits:
               cpu: 1
               memory: 1Gi
 
+          # Checks whether the application is ready to receive traffic
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -101,6 +130,8 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
 
+          # Checks whether the application is still healthy
+          # If it fails repeatedly, Kubernetes can restart the container
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -111,32 +142,44 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
 
+          # Security settings applied to the Customer container
           securityContext:
+
+            # Prevent the container from gaining additional privileges
             allowPrivilegeEscalation: false
+
+            # Run the application as a non-root user
             runAsNonRoot: true
+
+            # Root filesystem is read-only
             readOnlyRootFilesystem: true
 
+            # Remove all unnecessary Linux capabilities
             capabilities:
               drop:
                 - ALL
 
           volumeMounts:
+            # Writable temporary directory because root filesystem is read-only
             - name: tmp
               mountPath: /tmp
 
+            # Mount secrets provided by Secrets Store CSI Driver
             - name: customer-db-secret
               mountPath: /mnt/secrets-store
               readOnly: true
 
       volumes:
+        # Temporary storage for the Pod
         - name: tmp
           emptyDir: {}
 
+        # Secrets Store CSI Driver volume
         - name: customer-db-secret
           csi:
             driver: secrets-store.csi.k8s.io
-
             readOnly: true
 
+            # Connects this volume to the Customer SecretProviderClass
             volumeAttributes:
               secretProviderClass: customer-db-secret
