@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: card-config
+  namespace: card
+
+  labels:
+    app.kubernetes.io/name: card
+    app.kubernetes.io/part-of: hsbc
+    environment: prod
+
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://<RDS_ENDPOINT>:3306/card_db?useSSL=true&requireSSL=true&serverTimezone=UTC"
