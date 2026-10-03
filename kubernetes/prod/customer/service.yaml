@@ -1,7 +1,15 @@
+# Kubernetes API version for a Service
 apiVersion: v1
+
+# Creates a Kubernetes Service
 kind: Service
+
 metadata:
+  # Name of the Service
+  # Other applications can use this name to reach Customer Pods
   name: customer-service
+
+  # Namespace where the Service is created
   namespace: customer
 
   labels:
@@ -11,13 +19,25 @@ metadata:
     environment: prod
 
 spec:
+
+  # ClusterIP makes this Service accessible only inside the Kubernetes cluster
   type: ClusterIP
 
+  # Selects Pods that have the label app: customer
+  # The Service sends traffic to these Pods
   selector:
     app: customer
 
   ports:
+
+    # Name given to this Service port
     - name: http
+
+      # Application uses TCP protocol
       protocol: TCP
+
+      # Port exposed by the Service
       port: 8080
+
+      # Sends traffic to the container port named "http"
       targetPort: http
