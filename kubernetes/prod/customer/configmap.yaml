@@ -1,17 +1,32 @@
+# Kubernetes API version for a ConfigMap
 apiVersion: v1
+
+# Creates a ConfigMap
 kind: ConfigMap
+
 metadata:
+  # Name of the ConfigMap
+  # This name is referenced in deployment.yaml
   name: customer-config
+
+  # Namespace where the ConfigMap is created
   namespace: customer
 
+  # Labels used to identify the ConfigMap
   labels:
     app.kubernetes.io/name: customer
     app.kubernetes.io/part-of: hsbc
     environment: prod
 
+# Stores non-sensitive application configuration
 data:
+
+  # Tells the Spring Boot application to use the production profile
   SPRING_PROFILES_ACTIVE: "prod"
 
+  # Port on which the Spring Boot application listens
   SERVER_PORT: "8080"
 
+  # JDBC connection URL used by the application to connect to MySQL RDS
+  # <RDS_ENDPOINT> is replaced with the actual RDS endpoint
   SPRING_DATASOURCE_URL: "jdbc:mysql://<RDS_ENDPOINT>:3306/customer_db?useSSL=true&requireSSL=true&serverTimezone=UTC"
