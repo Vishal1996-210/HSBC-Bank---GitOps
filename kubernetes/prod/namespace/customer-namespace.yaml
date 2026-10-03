@@ -1,8 +1,15 @@
+# Kubernetes API version for a Namespace
 apiVersion: v1
+
+# Creates a Namespace
 kind: Namespace
+
 metadata:
+  # Name of the Namespace
+  # All Customer resources will be created inside this namespace
   name: customer
 
+  # Labels used to identify and group the Namespace
   labels:
     app.kubernetes.io/part-of: hsbc
     environment: prod
