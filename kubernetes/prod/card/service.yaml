@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: card-service
+  namespace: card
+
+  labels:
+    app: card
+    app.kubernetes.io/name: card
+    app.kubernetes.io/part-of: hsbc
+    environment: prod
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: card
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: http
