@@ -1,7 +1,14 @@
+# Kubernetes API version for PodDisruptionBudget
 apiVersion: policy/v1
+
+# Creates a PodDisruptionBudget
 kind: PodDisruptionBudget
+
 metadata:
+  # Name of the PDB
   name: customer
+
+  # Namespace where the PDB is created
   namespace: customer
 
   labels:
@@ -10,8 +17,12 @@ metadata:
     environment: prod
 
 spec:
+
+  # At least 2 Customer Pods should remain available
+  # during a voluntary disruption
   minAvailable: 2
 
+  # Selects Customer Pods using the app label
   selector:
     matchLabels:
       app: customer
