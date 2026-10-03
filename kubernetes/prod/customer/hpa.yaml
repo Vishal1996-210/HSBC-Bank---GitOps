@@ -1,7 +1,15 @@
+# Kubernetes API version for HorizontalPodAutoscaler
+# autoscaling/v2 supports advanced scaling configuration
 apiVersion: autoscaling/v2
+
+# Creates a Horizontal Pod Autoscaler
 kind: HorizontalPodAutoscaler
+
 metadata:
+  # Name of the HPA
   name: customer
+
+  # Namespace where the HPA is created
   namespace: customer
 
   labels:
@@ -10,46 +18,83 @@ metadata:
     environment: prod
 
 spec:
+
+  # Defines which Kubernetes resource the HPA will scale
   scaleTargetRef:
+
+    # API version of the target resource
     apiVersion: apps/v1
+
+    # The target resource is a Deployment
     kind: Deployment
+
+    # Deployment that the HPA will scale
     name: customer
 
+  # HPA will maintain at least 3 Pods
   minReplicas: 3
+
+  # HPA will not create more than 10 Pods
   maxReplicas: 10
 
+  # Controls how quickly the HPA scales up or down
   behavior:
+
     scaleUp:
+
+      # After a scaling event, wait 60 seconds before
+      # making another scale-up decision
       stabilizationWindowSeconds: 60
 
       policies:
+
+        # Allow the number of Pods to increase by up to 100%
         - type: Percent
           value: 100
+
+          # This policy can be applied once every 60 seconds
           periodSeconds: 60
 
     scaleDown:
+
+      # Wait 300 seconds before scaling down
+      # This helps avoid reducing Pods too quickly
       stabilizationWindowSeconds: 300
 
       policies:
+
+        # Allow the number of Pods to decrease by up to 25%
         - type: Percent
           value: 25
+
+          # This policy can be applied once every 60 seconds
           periodSeconds: 60
 
+  # Metrics used by the HPA to decide whether to scale
   metrics:
+
+    # First metric: CPU utilization
     - type: Resource
 
       resource:
         name: cpu
 
         target:
+          # HPA compares the average CPU usage with CPU requests
           type: Utilization
+
+          # Target average CPU utilization is 70%
           averageUtilization: 70
 
+    # Second metric: Memory utilization
     - type: Resource
 
       resource:
         name: memory
 
         target:
+          # HPA compares the average memory usage with memory requests
           type: Utilization
+
+          # Target average memory utilization is 75%
           averageUtilization: 75
