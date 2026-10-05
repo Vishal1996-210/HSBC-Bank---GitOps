@@ -1,7 +1,14 @@
+# Kubernetes API version for Ingress
 apiVersion: networking.k8s.io/v1
+
+# Creates a Kubernetes Ingress resource
 kind: Ingress
+
 metadata:
+  # Name of the Ingress
   name: frontend-ingress
+
+  # Ingress and its backend Service must be in the same namespace
   namespace: frontend
 
   labels:
@@ -10,38 +17,67 @@ metadata:
     environment: prod
 
   annotations:
+
+    # Create a public ALB that can receive traffic from the internet
     alb.ingress.kubernetes.io/scheme: internet-facing
+
+    # Register Pod IP addresses directly in the ALB target group
+    # Traffic goes from ALB directly to Frontend Pod IPs
     alb.ingress.kubernetes.io/target-type: ip
 
+    # ALB listens on HTTP port 80 and HTTPS port 443
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
 
+    # Redirect HTTP traffic to HTTPS
     alb.ingress.kubernetes.io/ssl-redirect: '443'
 
+    # ACM certificate used by the ALB for HTTPS
     alb.ingress.kubernetes.io/certificate-arn: <ACM_CERTIFICATE_ARN>
 
+    # ALB health check uses HTTP
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+
+    # Use the same port as the traffic target
     alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+
+    # ALB checks this path to determine whether the target is healthy
     alb.ingress.kubernetes.io/healthcheck-path: /
 
+    # HTTP response codes 200 through 399 are considered healthy
     alb.ingress.kubernetes.io/success-codes: '200-399'
 
+    # Additional ALB settings
     alb.ingress.kubernetes.io/load-balancer-attributes: >
       idle_timeout.timeout_seconds=60,
       deletion_protection.enabled=true
 
 spec:
+
+  # Tells Kubernetes to use the AWS Load Balancer Controller
+  # to implement this Ingress
   ingressClassName: alb
 
+  # Defines the hostname and routing rules
   rules:
+
+    # Requests for this domain are handled by this Ingress
     - host: www.hsbc.bank.in
 
       http:
         paths:
+
+          # Match requests beginning with /
           - path: /
+
+            # Prefix means / also matches paths such as
+            # /login, /dashboard, /api, etc.
             pathType: Prefix
 
             backend:
+              # Send matching traffic to the Frontend Service
               service:
                 name: frontend-service
+
+                # Service port receiving the traffic
                 port:
                   number: 8080
